@@ -1,0 +1,181 @@
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"io"
+	"log"
+	"os"
+)
+
+// Coordinate is a 2D coordinate.
+type Coordinate struct{ X, Y int }
+
+var (
+	minMap = Coordinate{-60, -60}
+	maxMap = Coordinate{+60, +60}
+)
+
+// Add returns the sum of two coordinates.
+func (c Coordinate) Add(other Coordinate) Coordinate {
+	return Coordinate{c.X + other.X, c.Y + other.Y}
+}
+
+// Path is a sequence of directions.
+type Path []Direction
+
+// Walk walks the path.
+func (p Path) Walk(f func(Coordinate, Direction)) {
+	var coord Coordinate
+	for _, dir := range p {
+		coord = coord.Add(directionDeltas[dir])
+		f(coord, dir)
+	}
+}
+
+// Pathmap is a 2D array describing the ant paths. Each cell is the direction
+// that we approached it from.
+type PathMap [][]Direction
+
+// NewPathMap returns a new PathMap with the given bounds.
+func NewPathMap(minMap, maxMap Coordinate) PathMap {
+	pathMap := make([][]Direction, maxMap.Y-minMap.Y+1)
+	for i := range pathMap {
+		pathMap[i] = make([]Direction, maxMap.X-minMap.X+1)
+	}
+	return pathMap
+}
+
+func (m PathMap) Set(c Coordinate, v Direction) {
+	m[c.Y-minMap.Y][c.X-minMap.X] = v
+}
+
+func (m PathMap) BeenAt(c Coordinate) Direction {
+	return m[c.Y-minMap.Y][c.X-minMap.X]
+}
+
+// Direction is a direction type.
+type Direction uint8
+
+const (
+	// NoDirection is a special direction that indicates that we haven't been
+	// to a cell yet.
+	NoDirection Direction = 0
+
+	North Direction = 'N'
+	East  Direction = 'E'
+	South Direction = 'S'
+	West  Direction = 'W'
+)
+
+var directionDeltas = map[Direction]Coordinate{
+	North: {0, 1},
+	East:  {1, 0},
+	South: {0, -1},
+	West:  {-1, 0},
+}
+
+func solve(path Path) {
+	start := Coordinate{0, 0}
+	coord := start
+
+	antMap := NewPathMap(minMap, maxMap)
+
+	log.Printf("for path %s, solving from %v", path, coord)
+
+	path.Walk(func(c Coordinate, d Direction) {
+		antMap.Set(c, d)
+		coord = c
+		log.Printf("  Max: moved to %v", coord)
+	})
+
+	efficientPath := mostEfficientPath(start, coord, antMap)
+	for _, c := range efficientPath {
+		log.Printf("  DFS: moved to %v", c)
+	}
+
+	log.Printf("  expecting %d steps", len(efficientPath))
+	log.Printf("  actual %d steps", len(path))
+
+	fmt.Println(len(efficientPath))
+}
+
+func mostEfficientPath(start, end Coordinate, antMap PathMap) []Coordinate {
+	distance := make(map[Coordinate]int)
+	distance[start] = 0
+
+	visited := make(map[Coordinate]bool)
+	visited[start] = true
+
+	prevs := make(map[Coordinate]Coordinate)
+
+	stack := []Coordinate{start}
+	for len(stack) > 0 {
+		pos := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+
+		if pos == end {
+			break
+		}
+
+		for dir, delta := range directionDeltas {
+			next := pos.Add(delta)
+
+			if !visited[next] && antMap.BeenAt(next) == dir {
+				visited[next] = true
+
+				distance[next] = distance[pos] + 1
+				prevs[next] = pos
+
+				stack = append(stack, next)
+			}
+		}
+	}
+
+	var path []Coordinate
+	for pos := end; pos != start; pos = prevs[pos] {
+		path = append(path, Coordinate{})
+		copy(path[1:], path)
+		path[0] = pos // prepend
+	}
+
+	return path
+}
+
+func main() {
+	var npaths int
+	mustSscanf(mustReadUntil('\n'), "%d\n", &npaths)
+	mustReadUntil('\n') // skip empty line
+
+	for i := 0; i < npaths; i++ {
+		var pathlen int
+		mustSscanf(mustReadUntil('\n'), "%d\n", &pathlen)
+
+		path := make(Path, pathlen)
+		for j := range path {
+			var direction string
+			mustSscanf(mustReadUntil('\n'), "%s", &direction)
+			path[j] = Direction(direction[0])
+		}
+
+		solve(path)
+		mustReadUntil('\n')
+	}
+}
+
+var stdio = bufio.NewReader(os.Stdin)
+
+func mustReadUntil(delim byte) string {
+	s, err := stdio.ReadString(delim)
+	if err != nil && err != io.EOF {
+		panic(err)
+	}
+	return s
+}
+
+func mustSscanf(s, f string, v ...interface{}) {
+	_, err := fmt.Sscanf(s, f, v...)
+	if err != nil {
+		panic(err)
+	}
+}
