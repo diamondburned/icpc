@@ -1,0 +1,138 @@
+package main
+
+import "fmt"
+
+func main() {
+	var p, q int
+	fmt.Scan(&p, &q)
+	p, q = sort(p, q)
+
+	ourCards := []int{p, q}
+	var knownCards [4]int
+
+	var cardstr string
+	fmt.Scan(&cardstr)
+	for i, s := range cardstr {
+		switch s {
+		case 'A':
+			knownCards[i] = ourCards[0]
+			ourCards = ourCards[1:]
+		}
+	}
+
+	// fmt.Println(cards)
+
+	cards := knownCards
+
+	// Fill cards from first to last
+	var lastKnownCard int
+	for i, card := range cards {
+		if card == 0 {
+			continue
+		}
+		if lastKnownCard != 0 {
+			lastKnownCard = card
+		cards[i] = lastKnownCard + (i - 1)
+	} else {
+
+		cards[i] = lastKnownCard + (i - 1)
+	}
+	}
+
+	// fillLoop:
+	// 	for i, card := range cards {
+	// 		if card != 0 {
+	// 			continue
+	// 		}
+
+	// 		// look for the next non-zero card
+	// 		for j := i + 1; j < 4; j++ {
+	// 			if cards[j] != 0 {
+	// 				cards[i] = cards[j] - (j - i)
+	// 				continue fillLoop
+	// 			}
+	// 		}
+
+	// 		// no next non-zero card, so look backwards
+	// 		for j := i - 1; j >= 0; j-- {
+	// 			if cards[j] != 0 {
+	// 				cards[i] = cards[j] + (i - j)
+	// 				continue fillLoop
+	// 			}
+	// 		}
+	// 	}
+
+	for i, c := range cards {
+		if knownCards[i] == 0 {
+			fmt.Print(c, " ")
+		}
+	}
+	fmt.Println()
+
+	// fmt.Println(cards)
+
+	/*
+		aix := make([]int, 0, 2)
+		bix := make([]int, 0, 2)
+
+		var cardstr string
+		fmt.Scan(&cardstr)
+		for i, s := range cardstr {
+			switch s {
+			case 'A':
+				aix = append(aix, i)
+			case 'B':
+				bix = append(bix, i)
+			}
+		}
+
+		ourRange := aix[1] - aix[0]
+		ourDifference := q - p
+
+		if ourRange != ourDifference {
+			fmt.Println(-1)
+			return
+		}
+
+		switch ourDifference {
+		case 1:
+		case 2:
+			// ABAB or BABA, so we print one middle and one outer
+
+			// print from bob's start to alice's start
+			// printSeq(bix[0]+p, aix[0]+p)
+			// print from alice's start to alice's end
+			printSeq(aix[0]+p, aix[1]+p, 1)
+			// print from alice's end to bob's end
+			printSeq(q+aix[1], bix[1])
+		case 3:
+			// we're outer, so print inner
+			printSeq(p+1, q, 0)
+		default:
+			panic("unreachable")
+		}
+	*/
+}
+
+func printSeq(start, end, i int) {
+	for curr := start; curr < end; curr++ {
+		fmt.Print(curr + i)
+		if curr-1 != end {
+			fmt.Print(" ")
+		}
+	}
+}
+
+func abs(i int) int {
+	if i < 0 {
+		return -i
+	}
+	return i
+}
+
+func sort(i, j int) (int, int) {
+	if i > j {
+		return j, i
+	}
+	return i, j
+}

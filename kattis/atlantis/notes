@@ -1,0 +1,5 @@
+This is probably one of those shortest path across all nodes in a graph
+algorithm. If you know the algorithm, it's simple. I think.
+
+The rising water level is probably used to eliminate choices down the line. I'd
+say this is a Medium.

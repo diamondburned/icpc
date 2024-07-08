@@ -1,0 +1,3 @@
+Movement restricted in a square grid. Goal is to find shortest path. Potentially
+a Manhattan distance problem. You find the shortest distance after some trivial
+removal of some nodes.
